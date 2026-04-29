@@ -90,7 +90,7 @@
         .error-message { color: var(--error-red); font-size: 13px; font-weight: 700; margin-top: 8px; display: block; animation: fadeIn 0.3s ease; }
 
         /* BOTONES */
-        .btn-container { display: flex; justify-content: space-between; margin-top: 40px; padding-top: 25px; border-top: 2px solid var(--grey); }
+        .btn-container { display: flex; justify-content: space-between; margin-top: 40px; padding-top: 25px; border-top: 2px solid var(--grey); gap: 10px; }
         button { padding: 16px 35px; border: none; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 1px; }
         button:active { transform: scale(0.96); }
         .btn-prev { background-color: #e2e8f0; color: var(--samu-navy); }
@@ -100,6 +100,10 @@
         .btn-small { padding: 8px 16px; font-size: 13px; border-radius: 8px; text-transform: none; letter-spacing: normal; cursor: pointer; transition: all 0.3s ease; }
         .btn-danger { background-color: var(--error-red); color: white; border: 1px solid var(--error-red); }
         .btn-danger:hover { background-color: #c92a38; }
+
+        /* BOTÓN VOLVER (ESTILO PERSONALIZADO) */
+        .btn-volver-portal { background-color: var(--grey); color: var(--samu-navy); margin-top: 20px; width: 100%; max-width: 300px; text-transform: none; letter-spacing: normal; }
+        .btn-volver-portal:hover { background-color: #cbd5e1; }
 
         /* ESTILOS BOTONES ILUMINADOS / APAGADOS */
         .btn-status-on { background-color: var(--success-green); color: white; border: 2px solid #27ae60; }
@@ -171,6 +175,7 @@
             <p style="color: #64748b; font-size: 15px; margin: 0 auto 20px auto; line-height: 1.5;">
                 Actualmente no estamos recibiendo nuevas postulaciones para la facción SAMU Metropolitano. Mantente atento a los anuncios en nuestro servidor de Discord para futuras aperturas.
             </p>
+            <button type="button" class="btn-volver-portal" onclick="window.location.href='https://postulaciones.malvekesrp.cl'">Volver a las postulaciones</button>
         </div>
 
         <div id="viewFormulario" class="main-box" style="display: none;">
@@ -247,9 +252,11 @@
                 </div>
 
                 <div class="btn-container">
+                    <button type="button" class="btn-prev" id="btnVolverInicio" onclick="window.location.href='https://postulaciones.malvekesrp.cl'">Volver a las postulaciones</button>
+                    
                     <button type="button" class="btn-prev" id="prevBtn" style="display: none;" onclick="nextPrev(-1)">Anterior</button>
-                    <button type="button" class="btn-next" id="nextBtn" onclick="nextPrev(1)">Siguiente</button>
-                    <button type="submit" class="btn-submit" id="submitBtn" style="display: none;">Enviar Postulación</button>
+                    <button type="button" class="btn-next" id="nextBtn" onclick="nextPrev(1)" style="margin-left: auto;">Siguiente</button>
+                    <button type="submit" class="btn-submit" id="submitBtn" style="display: none; margin-left: auto;">Enviar Postulación</button>
                 </div>
             </form>
         </div>
@@ -351,17 +358,16 @@
 
     <script>
         // --- CONFIGURACIÓN DE FIREBASE ---
-        // ¡REEMPLAZA ESTO CON LOS DATOS DE TU PROYECTO!
         const firebaseConfig = {
-    apiKey: "AIzaSyCXb2_goAzZfRUp_vS6zDRaXQl66EjB78A",
-    authDomain: "postulacion-samu.firebaseapp.com",
-    databaseURL: "https://postulacion-samu-default-rtdb.firebaseio.com",
-    projectId: "postulacion-samu",
-    storageBucket: "postulacion-samu.firebasestorage.app",
-    messagingSenderId: "208410495641",
-    appId: "1:208410495641:web:80f40d26df41bfd0178608",
-    measurementId: "G-EJJHXBPJRB"
-};
+            apiKey: "AIzaSyCXb2_goAzZfRUp_vS6zDRaXQl66EjB78A",
+            authDomain: "postulacion-samu.firebaseapp.com",
+            databaseURL: "https://postulacion-samu-default-rtdb.firebaseio.com",
+            projectId: "postulacion-samu",
+            storageBucket: "postulacion-samu.firebasestorage.app",
+            messagingSenderId: "208410495641",
+            appId: "1:208410495641:web:80f40d26df41bfd0178608",
+            measurementId: "G-EJJHXBPJRB"
+        };
 
         // Inicializar Firebase
         firebase.initializeApp(firebaseConfig);
@@ -443,7 +449,6 @@
             if(document.getElementById('viewLoading').style.display === 'flex') {
                 switchView(estadoPostulaciones === 'cerrado' ? 'viewCerrado' : 'viewFormulario');
             } else {
-                // Expulsar a los que están llenando si se cierra, o habilitar si se abre
                 if(estadoPostulaciones === 'cerrado' && document.getElementById('viewFormulario').style.display === 'block') {
                     switchView('viewCerrado');
                 } else if (estadoPostulaciones === 'abierto' && document.getElementById('viewCerrado').style.display === 'flex') {
@@ -457,7 +462,7 @@
             baseDatosLocal = [];
             snapshot.forEach((childSnapshot) => {
                 let data = childSnapshot.val();
-                data.id = childSnapshot.key; // Se guarda la ID única de Firebase
+                data.id = childSnapshot.key;
                 baseDatosLocal.push(data);
             });
             if (document.getElementById('viewAdminPanel').style.display === 'block') {
@@ -487,7 +492,6 @@
             let titulo = nuevoEstado === 'abierto' ? 'Abrir Postulaciones' : 'Cerrar Postulaciones';
 
             showCustomAlert(titulo, mensaje, 'confirm', () => {
-                // Enviar el nuevo estado a Firebase
                 db.ref('samu/estado').set(nuevoEstado);
                 showCustomAlert('Actualizado', `El sistema ahora está ${nuevoEstado}.`, 'success');
             });
@@ -501,7 +505,11 @@
         function showTab(n) {
             formSteps.forEach(step => step.classList.remove('active'));
             formSteps[n].classList.add('active');
+            
             document.getElementById('prevBtn').style.display = (n === 0) ? 'none' : 'inline-block';
+            
+            // LÓGICA BOTÓN VOLVER AL INICIO (Solo visible en Fase 1)
+            document.getElementById('btnVolverInicio').style.display = (n === 0) ? 'inline-block' : 'none';
             
             if (n === (formSteps.length - 1)) {
                 document.getElementById('nextBtn').style.display = 'none';
@@ -569,7 +577,6 @@
                 estado: 'Pendiente'
             };
 
-            // Empujar a Firebase
             db.ref('samu/postulaciones').push(data);
 
             showCustomAlert('¡Postulación Exitosa!', 'Tus datos han sido enviados a Jefatura. Atento a tu Discord.', 'success', () => {
@@ -585,7 +592,6 @@
             const user = document.getElementById('adminUser').value;
             const pass = document.getElementById('adminPass').value;
 
-            // Mantengo las credenciales que tenías configuradas
             if(user === 'admin' && pass === 'samuadmin131') {
                 this.reset();
                 actualizarBotonToggleUI();
@@ -644,7 +650,6 @@
                 return;
             }
             showCustomAlert('¡ADVERTENCIA CRÍTICA!', '¿Estás seguro? Esto borrará TODAS las postulaciones de la base de datos.', 'confirm', () => {
-                // Borrar en Firebase
                 db.ref('samu/postulaciones').remove();
                 showCustomAlert('Borrado Exitoso', 'El registro ha quedado completamente limpio.', 'success');
             });
@@ -653,7 +658,7 @@
         // --- LÓGICA DEL MODAL DINÁMICO ---
         function abrirModalDetalles(index) {
             const datos = baseDatosLocal[index];
-            idActualRevisando = datos.id; // Guardamos el ID de Firebase
+            idActualRevisando = datos.id; 
             
             document.getElementById('md-nombres').innerText = `${datos.discord} | ${datos.ic} | ${datos.ooc}`;
             document.getElementById('md-horario').innerText = `Horario: ${datos.horario} | Nivel RP: ${datos.rp}`;
@@ -680,7 +685,6 @@
 
         function aprobarPostulacion() {
             if(idActualRevisando !== null) {
-                // Actualizar el estado directo en Firebase
                 db.ref('samu/postulaciones/' + idActualRevisando).update({estado: 'Aprobado'});
             }
             cerrarModalDetalles();
@@ -690,7 +694,6 @@
         function rechazarPostulacion() {
             showCustomAlert('¿Rechazar Postulación?', 'Se eliminará de la base de datos definitivamente.', 'confirm', () => {
                 if(idActualRevisando !== null) {
-                    // Borrar postulación en Firebase
                     db.ref('samu/postulaciones/' + idActualRevisando).remove();
                 }
                 cerrarModalDetalles();
@@ -706,4 +709,4 @@
         showTab(currentTab);
     </script>
 </body>
-</html>
+</html>vvvvvvvvvvv
