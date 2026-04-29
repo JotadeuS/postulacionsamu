@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Postulación SAMU Metropolitano</title>
+    <style>
+        /* Regla maestra para evitar scrolls innecesarios por el padding */
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        /* Paleta de colores SAMU Metropolitano */
+        :root {
+            --samu-navy: #1d3557;
+            --samu-yellow: #f4d03f;
+            --form-bg: rgba(255, 255, 255, 0.96);
+            --text-dark: #333333;
+            --grey: #e2e8f0;
+            --error-red: #e63946;
+            --success-green: #2ecc71;
+            --light-green: #eafaf1;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--text-dark);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            position: relative;
+        }
+
+        body::before {
+            content: "";
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url('fondo.jpg'); background-size: cover; background-position: center;
+            filter: blur(8px) brightness(0.8); z-index: -1;
+        }
+
+        .container-wrapper { width: 100%; max-width: 850px; position: relative; z-index: 10; }
+        
+        /* Cajas principales */
+        .main-box {
+            background-color: var(--form-bg); border-radius: 16px;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3); padding: 50px;
+            border-top: 10px solid var(--samu-navy); backdrop-filter: blur(10px);
+            animation: fadeIn 0.4s ease-in-out;
+        }
+
+        /* Pantallas centradas (Loading y Cerrado) */
+        .centered-view { text-align: center; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; }
+        
+        /* SPINNER DE CARGA */
+        .loader {
+            border: 6px solid var(--grey); border-top: 6px solid var(--samu-navy); border-right: 6px solid var(--samu-yellow);
+            border-radius: 50%; width: 60px; height: 60px; animation: spin 1s linear infinite; margin: 0 auto 20px auto;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* HEADER */
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid var(--samu-yellow); }
+        .header h1 { color: var(--samu-navy); margin: 0; font-size: 42px; text-transform: uppercase; letter-spacing: 1px; font-weight: 900; }
+        .header p { color: #475569; margin: 5px 0 0 0; font-size: 18px; font-weight: 600; }
+        .header-logo { max-height: 120px; width: auto; mix-blend-mode: multiply; }
+
+        /* FORMULARIO */
+        .step-indicators { display: flex; justify-content: space-between; margin-bottom: 40px; position: relative; }
+        .step-indicators::before { content: ''; position: absolute; top: 50%; left: 0; right: 0; height: 3px; background-color: var(--grey); z-index: 1; transform: translateY(-50%); }
+        .indicator { width: 44px; height: 44px; background-color: #f8fafc; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; color: #94a3b8; position: relative; z-index: 2; transition: all 0.3s ease; border: 3px solid var(--grey); font-size: 18px; }
+        .indicator.active { background-color: var(--samu-navy); color: #fff; border-color: var(--samu-yellow); box-shadow: 0 0 20px rgba(29, 53, 87, 0.4); transform: scale(1.1); }
+        .indicator.completed { background-color: var(--samu-navy); color: #fff; border-color: var(--samu-navy); }
+
+        .form-step { display: none; }
+        .form-step.active { display: block; animation: fadeIn 0.4s ease-in-out; }
+        .form-step h2 { color: var(--samu-navy); border-bottom: 2px solid var(--samu-yellow); padding-bottom: 12px; margin-bottom: 30px; font-size: 24px; font-weight: 700; }
+
+        .input-group { margin-bottom: 30px; position: relative; }
+        label { display: block; margin-bottom: 10px; font-weight: 700; color: var(--samu-navy); font-size: 15px; line-height: 1.4; }
+        input[type="text"], input[type="password"], select, textarea { width: 100%; padding: 16px 20px; border: 2px solid var(--grey); border-radius: 12px; font-size: 15px; font-family: inherit; transition: all 0.3s ease; background-color: #f8fafc; color: var(--text-dark); }
+        input::placeholder, textarea::placeholder { color: #94a3b8; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--samu-yellow); background-color: #fff; box-shadow: 0 0 0 4px rgba(244, 208, 63, 0.15); }
+        select { appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231d3557' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 20px center; background-size: 18px; cursor: pointer; }
+        textarea { resize: vertical; min-height: 120px; line-height: 1.5; }
+
+        .input-error { border-color: var(--error-red) !important; background-color: #fff5f5 !important; box-shadow: 0 0 0 4px rgba(230, 57, 70, 0.1) !important; }
+        .error-message { color: var(--error-red); font-size: 13px; font-weight: 700; margin-top: 8px; display: block; animation: fadeIn 0.3s ease; }
+
+        /* BOTONES */
+        .btn-container { display: flex; justify-content: space-between; margin-top: 40px; padding-top: 25px; border-top: 2px solid var(--grey); }
+        button { padding: 16px 35px; border: none; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 1px; }
+        button:active { transform: scale(0.96); }
+        .btn-prev { background-color: #e2e8f0; color: var(--samu-navy); }
+        .btn-next, .btn-submit, .btn-admin-login { background-color: var(--samu-navy); color: #fff; border: 2px solid var(--samu-navy); box-shadow: 0 4px 15px rgba(29, 53, 87, 0.2); }
+        .btn-next:hover, .btn-submit:hover, .btn-admin-login:hover { background-color: var(--samu-yellow); color: var(--samu-navy); border-color: var(--samu-yellow); box-shadow: 0 6px 20px rgba(244, 208, 63, 0.3); }
+        
+        .btn-small { padding: 8px 16px; font-size: 13px; border-radius: 8px; text-transform: none; letter-spacing: normal; cursor: pointer; transition: all 0.3s ease; }
+        .btn-danger { background-color: var(--error-red); color: white; border: 1px solid var(--error-red); }
+        .btn-danger:hover { background-color: #c92a38; }
+
+        /* ESTILOS BOTONES ILUMINADOS / APAGADOS */
+        .btn-status-on { background-color: var(--success-green); color: white; border: 2px solid #27ae60; }
+        .btn-status-off { background-color: var(--error-red); color: white; border: 2px solid #c92a38; }
+        
+        .status-active { opacity: 1; box-shadow: 0 0 15px rgba(0,0,0,0.3); transform: scale(1.05); font-weight: bold; }
+        .status-inactive { opacity: 0.5; filter: grayscale(80%); background-color: #94a3b8 !important; border-color: #94a3b8 !important; color: #fff !important; transform: scale(0.95); }
+        .status-inactive:hover { opacity: 0.7; transform: scale(0.98); }
+
+        /* BOTÓN FLOTANTE */
+        .admin-floating-btn { position: fixed; bottom: 30px; right: 30px; background-color: rgba(29, 53, 87, 0.85); color: white; border: 2px solid rgba(255, 255, 255, 0.1); padding: 12px 20px; border-radius: 30px; font-size: 14px; backdrop-filter: blur(8px); box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); z-index: 100; display: flex; align-items: center; gap: 8px; }
+        .admin-floating-btn:hover { background-color: var(--samu-yellow); color: var(--samu-navy); transform: translateY(-3px); }
+
+        /* PANEL ADMINISTRATIVO */
+        .admin-stats { display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 15px 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--grey); }
+        .stat-box { font-size: 16px; font-weight: bold; color: var(--samu-navy); display: flex; align-items: center; }
+        .stat-box span { font-size: 20px; color: var(--samu-yellow); background: var(--samu-navy); padding: 4px 12px; border-radius: 8px; margin-left: 10px; }
+        .admin-actions { display: flex; gap: 10px; align-items: center; }
+        .divider-line { height: 30px; width: 2px; background-color: var(--grey); margin: 0 10px; }
+        
+        .admin-table-container { overflow-x: auto; min-height: 200px; }
+        .admin-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; }
+        .admin-table th, .admin-table td { padding: 15px; text-align: left; border-bottom: 1px solid var(--grey); }
+        .admin-table th { background-color: var(--samu-navy); color: #fff; font-weight: 600; text-transform: uppercase; font-size: 14px; }
+        .btn-review { background-color: var(--samu-yellow); color: var(--samu-navy); padding: 8px 16px; font-size: 13px; border-radius: 6px; }
+
+        /* CUSTOM ALERT */
+        .custom-alert-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(29, 53, 87, 0.8); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
+        .custom-alert-box { background: white; width: 90%; max-width: 400px; padding: 30px; border-radius: 16px; text-align: center; border-top: 6px solid var(--samu-yellow); box-shadow: 0 10px 40px rgba(0,0,0,0.3); animation: scaleIn 0.3s ease; }
+        .custom-alert-icon { font-size: 50px; margin-bottom: 15px; }
+        .custom-alert-title { color: var(--samu-navy); font-size: 24px; margin: 0 0 10px 0; font-weight: 900; text-transform: uppercase; }
+        .custom-alert-text { color: #64748b; font-size: 16px; margin-bottom: 25px; line-height: 1.5; }
+        .custom-alert-buttons { display: flex; gap: 15px; justify-content: center; }
+        .custom-alert-buttons button { padding: 12px 25px; font-size: 14px; flex: 1; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes scaleIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+    </style>
+</head>
+<body>
+
+    <div id="customAlert" class="custom-alert-overlay">
+        <div class="custom-alert-box">
+            <div id="alertIcon" class="custom-alert-icon">🚑</div>
+            <h3 id="alertTitle" class="custom-alert-title">Título</h3>
+            <p id="alertText" class="custom-alert-text">Texto de la alerta.</p>
+            <div class="custom-alert-buttons">
+                <button id="btnAlertCancel" class="btn-prev" style="display: none;">Cancelar</button>
+                <button id="btnAlertConfirm" class="btn-next">Aceptar</button>
+            </div>
+        </div>
+    </div>
+
+    <button id="btnFloatingAdmin" class="admin-floating-btn" onclick="switchView('viewLogin')" style="display: none;">
+        ⚙️ Panel Administrativo
+    </button>
+
+    <div class="container-wrapper">
+        
+        <div id="viewLoading" class="main-box centered-view" style="display: flex;">
+            <div class="loader"></div>
+            <h2 style="color: var(--samu-navy);">Conectando con la Central...</h2>
+            <p style="color: #64748b;">Verificando estado de postulaciones.</p>
+        </div>
+
+        <div id="viewCerrado" class="main-box centered-view" style="max-width: 500px; margin: 0 auto; padding: 40px 30px; display: none;">
+            <img src="logo.png" alt="SAMU Logo" style="max-height: 100px; mix-blend-mode: multiply; margin-bottom: 20px;">
+            <h1 style="color: var(--samu-navy); font-size: 26px; text-transform: uppercase; margin: 0 0 10px 0;">Postulaciones Cerradas</h1>
+            <p style="color: #64748b; font-size: 15px; margin: 0 auto 20px auto; line-height: 1.5;">
+                Actualmente no estamos recibiendo nuevas postulaciones para la facción SAMU Metropolitano. Mantente atento a los anuncios en nuestro servidor de Discord para futuras aperturas.
+            </p>
+        </div>
+
+        <div id="viewFormulario" class="main-box" style="display: none;">
+            <div class="header">
+                <div class="header-content">
+                    <h1>Postulación SAMU</h1>
+                    <p>Metropolitano de Urgencia - 131</p>
+                </div>
+                <img src="logo.png" alt="SAMU Logo" class="header-logo">
+            </div>
+
+            <div class="step-indicators">
+                <div class="indicator active" id="ind-1">1</div>
+                <div class="indicator" id="ind-2">2</div>
+                <div class="indicator" id="ind-3">3</div>
+            </div>
+
+            <form id="samuForm" novalidate>
+                <div class="form-step active" id="step-1">
+                    <h2>Fase 1: Información IC y OOC</h2>
+                    <div class="input-group"><label>Nombre de Discord</label><input type="text" id="discordName" placeholder="Ej: usuario#1234" required></div>
+                    <div class="input-group"><label>Nombre y edad IC</label><input type="text" id="icInfo" placeholder="Ej: Juan Perez, 28 años" required></div>
+                    <div class="input-group"><label>Nombre y edad OOC</label><input type="text" id="oocInfo" placeholder="Ej: Matias, 21 años" required></div>
+                    <div class="input-group"><label>Disponibilidad Horaria</label><input type="text" id="horario" placeholder="Ej: Lunes a Viernes de 18:00 a 23:00" required></div>
+                    <div class="input-group">
+                        <label>¿Nivel de RP?</label>
+                        <select id="rpLevel" required>
+                            <option value="" disabled selected>Selecciona tu nivel</option>
+                            <option value="ALTO">Alto</option>
+                            <option value="MEDIO">Medio</option>
+                            <option value="BAJO">Bajo</option>
+                        </select>
+                    </div>
+                    <div class="input-group"><label>¿Alguna experiencia previa en SAMU o alguna otra facción? Si tu respuesta es si, indica que facción y a que cargo llegaste</label><textarea id="experiencia" placeholder="Indica facción y cargo..." required></textarea></div>
+                    <div class="input-group"><label>¿ Tienes conocimiento de los siguientes terminos? Explica que es cada uno de ellos (MetaGaming/PowerGaming/Fail RP)</label><textarea id="terminosRP" placeholder="Explica con tus palabras..." required></textarea></div>
+                </div>
+
+                <div class="form-step" id="step-2">
+                    <h2>Fase 2: Conocimientos de Rol y Procedimientos</h2>
+                    <div class="input-group">
+                        <label>Te llega un paciente herido de bala y con pulsaciones bajas. ¿Cómo lo atenderías usando el /Me y /Do?</label>
+                        <textarea id="rolPacienteBala" placeholder="Ej: /me abre su maletín, saca gasas y hace presión sobre la herida..." required></textarea>
+                    </div>
+                    <div class="input-group">
+                        <label>Como SAMU, puedes hacer actos delictuales dentro y fuera de servicio?</label>
+                        <textarea id="actosDelictuales" placeholder="Justifica tu respuesta basándote en la normativa..." required></textarea>
+                    </div>
+                    <div class="input-group">
+                        <label>Recibes un llamado de un tiroteo, el cual dejo a 2 personas heridas, cuando estas atendiendolos, llega alguien con un arma y se pone a disparar ¿Cual es tu reacción y/o que harias?</label>
+                        <textarea id="rolTiroteo" placeholder="Ej: Priorizo mi vida, me retiro a una zona segura..." required></textarea>
+                    </div>
+                    <div class="input-group">
+                        <label>Estas solo en SAMU, no hay ningun superior y esta llegando mucha gente para que revivas a sus amigos, para pedir curas y te llegan llamados a terreno ¿Cual es tu prioridad y que harias en ese caso?</label>
+                        <textarea id="prioridadSolo" placeholder="Ej: Establezco un triage, atiendo códigos rojos primero..." required></textarea>
+                    </div>
+                    <div class="input-group">
+                        <label>Acudes a un llamado de un ciudadano que vio a civiles y carabineros abatidos ¿Cómo reaccionarias?</label>
+                        <textarea id="rolCarabinerosAbatidos" placeholder="Ej: Doy prioridad a Carabineros para asegurar el área..." required></textarea>
+                    </div>
+                </div>
+
+                <div class="form-step" id="step-3">
+                    <h2>Fase 3: Compromiso SAMU</h2>
+                    <div class="input-group"><label>¿Porque quieres entrar a SAMU?</label><textarea id="motivoIngreso" placeholder="Ej: Quiero fomentar el rol médico, me gusta salvar vidas..." required></textarea></div>
+                    <div class="input-group"><label>¿Qué puedes aportar al equipo?</label><textarea id="aporteEquipo" placeholder="Ej: Actividad nocturna, disposición para enseñar a los nuevos..." required></textarea></div>
+                    <div class="input-group">
+                        <label>¿Estas dispuesto a seguir ordenes y respetar jerarquias?</label>
+                        <select id="jerarquia" required>
+                            <option value="" disabled selected>Selecciona una opción</option>
+                            <option value="SI">Sí, totalmente</option>
+                            <option value="NO">No</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="btn-container">
+                    <button type="button" class="btn-prev" id="prevBtn" style="display: none;" onclick="nextPrev(-1)">Anterior</button>
+                    <button type="button" class="btn-next" id="nextBtn" onclick="nextPrev(1)">Siguiente</button>
+                    <button type="submit" class="btn-submit" id="submitBtn" style="display: none;">Enviar Postulación</button>
+                </div>
+            </form>
+        </div>
+
+        <div id="viewLogin" class="main-box" style="max-width: 400px; margin: 0 auto; padding: 40px 30px; display: none;">
+            <div class="header" style="justify-content: center; flex-direction: column; text-align: center; margin-bottom: 20px; padding-bottom: 15px;">
+                <img src="logo.png" alt="SAMU Logo" class="header-logo" style="margin-bottom: 10px; max-height: 80px;">
+                <h1 style="font-size: 24px;">Panel Administrativo</h1>
+            </div>
+            
+            <form id="loginForm" novalidate>
+                <div class="input-group" style="margin-bottom: 20px;">
+                    <label style="font-size: 14px;">Usuario</label>
+                    <input type="text" id="adminUser" placeholder="Ingresa usuario" required style="padding: 12px 15px;">
+                </div>
+                <div class="input-group" style="margin-bottom: 25px;">
+                    <label style="font-size: 14px;">Clave Maestra</label>
+                    <input type="password" id="adminPass" placeholder="Ingresa contraseña" required style="padding: 12px 15px;">
+                </div>
+                <div class="btn-container" style="justify-content: center; flex-direction: column; gap: 10px; margin-top: 0; padding-top: 0; border: none;">
+                    <button type="submit" class="btn-admin-login" style="width: 100%; padding: 14px;">Ingresar</button>
+                    <button type="button" class="btn-prev" onclick="volverAInicio()" style="width: 100%; padding: 14px;">Volver</button>
+                </div>
+            </form>
+        </div>
+
+        <div id="viewAdminPanel" class="main-box" style="display: none;">
+            <div class="header">
+                <div class="header-content">
+                    <h1>Panel Administrativo</h1>
+                    <p>Gestión de Postulantes SAMU</p>
+                </div>
+                <img src="logo.png" alt="SAMU Logo" class="header-logo" style="max-height: 80px;">
+            </div>
+
+            <div class="admin-stats">
+                <div class="stat-box">Total: <span id="contadorPostulaciones">0</span></div>
+                
+                <div class="admin-actions">
+                    <button id="btnOpenStatus" class="btn-small btn-status-on" onclick="setStatus('abierto')">🟢 Abrir Postulaciones</button>
+                    <button id="btnCloseStatus" class="btn-small btn-status-off status-inactive" onclick="setStatus('cerrado')">🔴 Cerrar Postulaciones</button>
+                    <div class="divider-line"></div>
+                    <button class="btn-small btn-danger" onclick="borrarTodasLasPostulaciones()">🗑️ Borrar Todo</button>
+                </div>
+            </div>
+
+            <div class="admin-table-container">
+                <table class="admin-table" id="tablaPrincipal">
+                    <thead>
+                        <tr>
+                            <th>Discord</th>
+                            <th>Nombre IC</th>
+                            <th>Nivel RP</th>
+                            <th>Estado</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaPostulantes">
+                        </tbody>
+                </table>
+            </div>
+            <button class="btn-prev" onclick="logoutAdmin()" style="margin-top: 30px;">Cerrar Sesión</button>
+        </div>
+
+    </div>
+
+    <div id="modalDetalles" class="details-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; backdrop-filter: blur(4px);">
+        <div class="details-content" style="background: #fff; width: 100%; max-width: 700px; max-height: 90vh; border-radius: 12px; overflow-y: auto; padding: 30px; position: relative; border-top: 8px solid var(--samu-yellow);">
+            <button class="close-modal" onclick="cerrarModalDetalles()" style="position: absolute; top: 20px; right: 20px; font-size: 28px; cursor: pointer; color: var(--samu-navy); font-weight: bold; background: none; border: none; padding: 0;">&times;</button>
+            <h2 style="color: var(--samu-navy); border-bottom: 2px solid var(--samu-yellow); padding-bottom: 10px; margin-top: 0; font-size: 28px;">Ficha de Postulación</h2>
+            
+            <h3 style="color: #64748b; margin-top: 20px;">FASE 1: IC y OOC</h3>
+            <div class="detail-item"><h4 style="color: var(--samu-navy); margin: 0 0 5px 0; font-size: 14px; text-transform: uppercase;">Discord / IC / OOC</h4><p id="md-nombres" style="margin: 0; color: #444; font-size: 15px; white-space: pre-wrap; background: #f8fafc; padding: 10px; border-radius: 8px; border-left: 4px solid var(--samu-yellow);">Cargando...</p></div>
+            <div class="detail-item"><h4 style="color: var(--samu-navy); margin: 0 0 5px 0; font-size: 14px; text-transform: uppercase;">Disponibilidad y Nivel RP</h4><p id="md-horario" style="margin: 0; color: #444; font-size: 15px; white-space: pre-wrap; background: #f8fafc; padding: 10px; border-radius: 8px; border-left: 4px solid var(--samu-yellow);">Cargando...</p></div>
+            <div class="detail-item"><h4 style="color: var(--samu-navy); margin: 0 0 5px 0; font-size: 14px; text-transform: uppercase;">Experiencia Previa</h4><p id="md-exp" style="margin: 0; color: #444; font-size: 15px; white-space: pre-wrap; background: #f8fafc; padding: 10px; border-radius: 8px; border-left: 4px solid var(--samu-yellow);">Cargando...</p></div>
+            <div class="detail-item"><h4 style="color: var(--samu-navy); margin: 0 0 5px 0; font-size: 14px; text-transform: uppercase;">Términos RP</h4><p id="md-term" style="margin: 0; color: #444; font-size: 15px; white-space: pre-wrap; background: #f8fafc; padding: 10px; border-radius: 8px; border-left: 4px solid var(--samu-yellow);">Cargando...</p></div>
+            
+            <h3 style="color: #64748b; margin-top: 30px;">FASE 2: CONOCIMIENTOS DE ROL Y PROCEDIMIENTOS</h3>
+            <div class="detail-item"><h4 style="color: var(--samu-navy); margin: 0 0 5px 0; font-size: 14px; text-transform: uppercase;">Herido de bala</h4><p id="md-rol1" style="margin: 0; color: #444; font-size: 15px; white-space: pre-wrap; background: #f8fafc; padding: 10px; border-radius: 8px; border-left: 4px solid var(--samu-yellow);">Cargando...</p></div>
+            <div class="detail-item"><h4 style="color: var(--samu-navy); margin: 0 0 5px 0; font-size: 14px; text-transform: uppercase;">Actos delictuales</h4><p id="md-rol2" style="margin: 0; color: #444; font-size: 15px; white-space: pre-wrap; background: #f8fafc; padding: 10px; border-radius: 8px; border-left: 4px solid var(--samu-yellow);">Cargando...</p></div>
+            <div class="detail-item"><h4 style="color: var(--samu-navy); margin: 0 0 5px 0; font-size: 14px; text-transform: uppercase;">Tiroteo activo</h4><p id="md-rol3" style="margin: 0; color: #444; font-size: 15px; white-space: pre-wrap; background: #f8fafc; padding: 10px; border-radius: 8px; border-left: 4px solid var(--samu-yellow);">Cargando...</p></div>
+            <div class="detail-item"><h4 style="color: var(--samu-navy); margin: 0 0 5px 0; font-size: 14px; text-transform: uppercase;">Prioridad</h4><p id="md-rol4" style="margin: 0; color: #444; font-size: 15px; white-space: pre-wrap; background: #f8fafc; padding: 10px; border-radius: 8px; border-left: 4px solid var(--samu-yellow);">Cargando...</p></div>
+            <div class="detail-item"><h4 style="color: var(--samu-navy); margin: 0 0 5px 0; font-size: 14px; text-transform: uppercase;">Civiles y Carabineros abatidos</h4><p id="md-rol5" style="margin: 0; color: #444; font-size: 15px; white-space: pre-wrap; background: #f8fafc; padding: 10px; border-radius: 8px; border-left: 4px solid var(--samu-yellow);">Cargando...</p></div>
+
+            <h3 style="color: #64748b; margin-top: 30px;">FASE 3: COMPROMISO</h3>
+            <div class="detail-item"><h4 style="color: var(--samu-navy); margin: 0 0 5px 0; font-size: 14px; text-transform: uppercase;">Motivo de Ingreso</h4><p id="md-motivo" style="margin: 0; color: #444; font-size: 15px; white-space: pre-wrap; background: #f8fafc; padding: 10px; border-radius: 8px; border-left: 4px solid var(--samu-yellow);">Cargando...</p></div>
+            <div class="detail-item"><h4 style="color: var(--samu-navy); margin: 0 0 5px 0; font-size: 14px; text-transform: uppercase;">Aporte al equipo</h4><p id="md-aporte" style="margin: 0; color: #444; font-size: 15px; white-space: pre-wrap; background: #f8fafc; padding: 10px; border-radius: 8px; border-left: 4px solid var(--samu-yellow);">Cargando...</p></div>
+            <div class="detail-item"><h4 style="color: var(--samu-navy); margin: 0 0 5px 0; font-size: 14px; text-transform: uppercase;">Respeto de Jerarquías</h4><p id="md-jerarquia" style="margin: 0; color: #444; font-size: 15px; white-space: pre-wrap; background: #f8fafc; padding: 10px; border-radius: 8px; border-left: 4px solid var(--samu-yellow);">Cargando...</p></div>
+
+            <div style="display: flex; gap: 15px; margin-top: 40px; padding-top: 20px; border-top: 2px solid var(--grey);">
+                <button style="background: var(--success-green); color: white; width: 100%; border-radius: 8px; padding: 12px; border: none; cursor: pointer; font-weight: bold;" onclick="aprobarPostulacion()">✅ Aprobar</button>
+                <button style="background: var(--error-red); color: white; width: 100%; border-radius: 8px; padding: 12px; border: none; cursor: pointer; font-weight: bold;" onclick="rechazarPostulacion()">❌ Rechazar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database-compat.js"></script>
+
+    <script>
+        // --- CONFIGURACIÓN DE FIREBASE ---
+        // ¡REEMPLAZA ESTO CON LOS DATOS DE TU PROYECTO!
+        const firebaseConfig = {
+    apiKey: "AIzaSyCXb2_goAzZfRUp_vS6zDRaXQl66EjB78A",
+    authDomain: "postulacion-samu.firebaseapp.com",
+    databaseURL: "https://postulacion-samu-default-rtdb.firebaseio.com",
+    projectId: "postulacion-samu",
+    storageBucket: "postulacion-samu.firebasestorage.app",
+    messagingSenderId: "208410495641",
+    appId: "1:208410495641:web:80f40d26df41bfd0178608",
+    measurementId: "G-EJJHXBPJRB"
+};
+
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let baseDatosLocal = [];
+        let estadoPostulaciones = 'abierto';
+
+        // --- SISTEMA DE ALERTAS PERSONALIZADO ---
+        let currentConfirmCallback = null;
+        function showCustomAlert(title, text, type = 'info', callback = null) {
+            const overlay = document.getElementById('customAlert');
+            const icon = document.getElementById('alertIcon');
+            const btnConfirm = document.getElementById('btnAlertConfirm');
+            const btnCancel = document.getElementById('btnAlertCancel');
+            
+            document.getElementById('alertTitle').innerText = title;
+            document.getElementById('alertText').innerText = text;
+            currentConfirmCallback = callback;
+
+            if(type === 'success') {
+                icon.innerText = '✅'; btnConfirm.style.backgroundColor = 'var(--success-green)'; btnCancel.style.display = 'none';
+            } else if (type === 'error' || type === 'warning') {
+                icon.innerText = '⚠️'; btnConfirm.style.backgroundColor = 'var(--error-red)'; btnCancel.style.display = 'none';
+            } else if (type === 'confirm') {
+                icon.innerText = '❓'; btnConfirm.style.backgroundColor = 'var(--error-red)'; btnCancel.style.display = 'block';
+            } else {
+                icon.innerText = '🚑'; btnConfirm.style.backgroundColor = 'var(--samu-navy)'; btnCancel.style.display = 'none';
+            }
+            overlay.style.display = 'flex';
+        }
+
+        document.getElementById('btnAlertConfirm').onclick = function() {
+            document.getElementById('customAlert').style.display = 'none';
+            if(currentConfirmCallback) currentConfirmCallback();
+        };
+        document.getElementById('btnAlertCancel').onclick = function() {
+            document.getElementById('customAlert').style.display = 'none';
+            currentConfirmCallback = null;
+        };
+
+        // --- MANEJO ESTRICTO DE VISTAS ---
+        function switchView(viewId) {
+            document.getElementById('viewLoading').style.display = 'none';
+            document.getElementById('viewCerrado').style.display = 'none';
+            document.getElementById('viewFormulario').style.display = 'none';
+            document.getElementById('viewLogin').style.display = 'none';
+            document.getElementById('viewAdminPanel').style.display = 'none';
+
+            const view = document.getElementById(viewId);
+            if(viewId === 'viewLoading' || viewId === 'viewCerrado') {
+                view.style.display = 'flex';
+            } else {
+                view.style.display = 'block';
+            }
+            
+            const floatingBtn = document.getElementById('btnFloatingAdmin');
+            floatingBtn.style.display = (viewId === 'viewFormulario' || viewId === 'viewCerrado') ? 'flex' : 'none';
+        }
+
+        function volverAInicio() {
+            if(estadoPostulaciones === 'cerrado') {
+                switchView('viewCerrado');
+            } else {
+                switchView('viewFormulario');
+            }
+        }
+
+        // --- ARRANQUE DE LA PÁGINA Y FIREBASE ---
+        window.addEventListener('DOMContentLoaded', () => {
+            switchView('viewLoading');
+        });
+
+        // 1. Escuchar el estado de las postulaciones en tiempo real
+        db.ref('samu/estado').on('value', (snapshot) => {
+            estadoPostulaciones = snapshot.val() || 'abierto';
+            actualizarBotonToggleUI();
+            
+            if(document.getElementById('viewLoading').style.display === 'flex') {
+                switchView(estadoPostulaciones === 'cerrado' ? 'viewCerrado' : 'viewFormulario');
+            } else {
+                // Expulsar a los que están llenando si se cierra, o habilitar si se abre
+                if(estadoPostulaciones === 'cerrado' && document.getElementById('viewFormulario').style.display === 'block') {
+                    switchView('viewCerrado');
+                } else if (estadoPostulaciones === 'abierto' && document.getElementById('viewCerrado').style.display === 'flex') {
+                    switchView('viewFormulario');
+                }
+            }
+        });
+
+        // 2. Escuchar las postulaciones entrantes en tiempo real
+        db.ref('samu/postulaciones').on('value', (snapshot) => {
+            baseDatosLocal = [];
+            snapshot.forEach((childSnapshot) => {
+                let data = childSnapshot.val();
+                data.id = childSnapshot.key; // Se guarda la ID única de Firebase
+                baseDatosLocal.push(data);
+            });
+            if (document.getElementById('viewAdminPanel').style.display === 'block') {
+                renderizarTablaPostulantes();
+            }
+        });
+
+
+        // --- LÓGICA DE ABRIR / CERRAR FORMULARIO CON 2 BOTONES ---
+        function actualizarBotonToggleUI() {
+            const btnOpen = document.getElementById('btnOpenStatus');
+            const btnClose = document.getElementById('btnCloseStatus');
+            
+            if(estadoPostulaciones === 'abierto') {
+                btnOpen.className = 'btn-small btn-status-on status-active';
+                btnClose.className = 'btn-small btn-status-off status-inactive';
+            } else {
+                btnClose.className = 'btn-small btn-status-off status-active';
+                btnOpen.className = 'btn-small btn-status-on status-inactive';
+            }
+        }
+
+        function setStatus(nuevoEstado) {
+            if(estadoPostulaciones === nuevoEstado) return; 
+
+            let mensaje = nuevoEstado === 'abierto' ? 'El formulario volverá a ser público.' : 'Nadie más podrá postular.';
+            let titulo = nuevoEstado === 'abierto' ? 'Abrir Postulaciones' : 'Cerrar Postulaciones';
+
+            showCustomAlert(titulo, mensaje, 'confirm', () => {
+                // Enviar el nuevo estado a Firebase
+                db.ref('samu/estado').set(nuevoEstado);
+                showCustomAlert('Actualizado', `El sistema ahora está ${nuevoEstado}.`, 'success');
+            });
+        }
+
+        // --- LÓGICA DEL FORMULARIO DE PASOS ---
+        let currentTab = 0;
+        const formSteps = document.querySelectorAll('.form-step');
+        const indicators = document.querySelectorAll('.indicator');
+
+        function showTab(n) {
+            formSteps.forEach(step => step.classList.remove('active'));
+            formSteps[n].classList.add('active');
+            document.getElementById('prevBtn').style.display = (n === 0) ? 'none' : 'inline-block';
+            
+            if (n === (formSteps.length - 1)) {
+                document.getElementById('nextBtn').style.display = 'none';
+                document.getElementById('submitBtn').style.display = 'inline-block';
+            } else {
+                document.getElementById('nextBtn').style.display = 'inline-block';
+                document.getElementById('submitBtn').style.display = 'none';
+            }
+            indicators.forEach((ind, index) => {
+                ind.className = 'indicator';
+                if (index < n) ind.classList.add('completed');
+                else if (index === n) ind.classList.add('active');
+            });
+        }
+        function nextPrev(n) { currentTab += n; showTab(currentTab); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+
+        function checkFields(formElement) {
+            let allValid = true;
+            const requiredInputs = formElement.querySelectorAll('input[required], select[required], textarea[required]');
+            formElement.querySelectorAll('.error-message').forEach(error => error.remove());
+            requiredInputs.forEach(input => input.classList.remove('input-error'));
+            requiredInputs.forEach(input => {
+                if (input.value.trim() === '') {
+                    input.classList.add('input-error');
+                    const errorSpan = document.createElement('span');
+                    errorSpan.className = 'error-message'; errorSpan.innerHTML = '⚠️ Este campo es obligatorio.';
+                    input.parentNode.insertBefore(errorSpan, input.nextSibling);
+                    allValid = false;
+                }
+            });
+            return allValid;
+        }
+
+        document.querySelectorAll('input, select, textarea').forEach(item => {
+            item.addEventListener('input', function() {
+                if(this.classList.contains('input-error')) {
+                    this.classList.remove('input-error');
+                    const errorMsg = this.parentNode.querySelector('.error-message');
+                    if(errorMsg) errorMsg.remove();
+                }
+            });
+        });
+
+        // ENVIAR POSTULACIÓN Y GUARDAR EN FIREBASE
+        document.getElementById('samuForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (!checkFields(this)) return; 
+            
+            const data = {
+                discord: document.getElementById('discordName').value,
+                ic: document.getElementById('icInfo').value,
+                ooc: document.getElementById('oocInfo').value,
+                horario: document.getElementById('horario').value,
+                rp: document.getElementById('rpLevel').value,
+                exp: document.getElementById('experiencia').value,
+                term: document.getElementById('terminosRP').value,
+                rol1: document.getElementById('rolPacienteBala').value,
+                rol2: document.getElementById('actosDelictuales').value,
+                rol3: document.getElementById('rolTiroteo').value,
+                rol4: document.getElementById('prioridadSolo').value,
+                rol5: document.getElementById('rolCarabinerosAbatidos').value,
+                motivo: document.getElementById('motivoIngreso').value,
+                aporte: document.getElementById('aporteEquipo').value,
+                jerarquia: document.getElementById('jerarquia').value,
+                estado: 'Pendiente'
+            };
+
+            // Empujar a Firebase
+            db.ref('samu/postulaciones').push(data);
+
+            showCustomAlert('¡Postulación Exitosa!', 'Tus datos han sido enviados a Jefatura. Atento a tu Discord.', 'success', () => {
+                this.reset(); currentTab = 0; showTab(currentTab);
+            });
+        });
+
+        // --- LOGIN ADMINISTRATIVO ---
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (!checkFields(this)) return;
+
+            const user = document.getElementById('adminUser').value;
+            const pass = document.getElementById('adminPass').value;
+
+            // Mantengo las credenciales que tenías configuradas
+            if(user === 'admin' && pass === 'samuadmin131') {
+                this.reset();
+                actualizarBotonToggleUI();
+                renderizarTablaPostulantes(); 
+                switchView('viewAdminPanel');
+            } else {
+                showCustomAlert('Acceso Denegado', 'El usuario o la clave maestra son incorrectos.', 'error');
+            }
+        });
+
+        function logoutAdmin() {
+            showCustomAlert('¿Cerrar Sesión?', '¿Estás seguro de que deseas salir del Panel Administrativo?', 'confirm', () => {
+                volverAInicio();
+            });
+        }
+
+        // --- GENERADOR DE LA TABLA DINÁMICA ---
+        let idActualRevisando = null;
+
+        function renderizarTablaPostulantes() {
+            const tbody = document.getElementById('tablaPostulantes');
+            tbody.innerHTML = ''; 
+            
+            document.getElementById('contadorPostulaciones').innerText = baseDatosLocal.length;
+
+            if (baseDatosLocal.length === 0) {
+                tbody.innerHTML = `
+                    <tr id="emptyRow">
+                        <td colspan="5" style="text-align: center; color: #94a3b8; font-style: italic; padding: 40px;">
+                            Aún no hay registros de postulaciones.
+                        </td>
+                    </tr>
+                `;
+            } else {
+                baseDatosLocal.forEach((postulacion, index) => {
+                    let esAprobado = postulacion.estado === 'Aprobado';
+                    let trBg = esAprobado ? 'background-color: var(--light-green);' : '';
+                    let estadoTxt = esAprobado ? '<span style="color: var(--success-green); font-weight:bold;">Aprobado</span>' : 'Pendiente';
+
+                    tbody.innerHTML += `
+                        <tr style="${trBg}">
+                            <td>${postulacion.discord}</td>
+                            <td>${postulacion.ic}</td>
+                            <td><span style="background: #e2e8f0; padding: 4px 10px; border-radius: 20px; font-weight: bold; font-size: 12px; color: var(--samu-navy);">${postulacion.rp}</span></td>
+                            <td>${estadoTxt}</td>
+                            <td><button class="btn-review" onclick="abrirModalDetalles(${index})">Revisar</button></td>
+                        </tr>
+                    `;
+                });
+            }
+        }
+
+        function borrarTodasLasPostulaciones() {
+            if (baseDatosLocal.length === 0) {
+                showCustomAlert('Aviso', 'No hay registros para borrar.', 'info');
+                return;
+            }
+            showCustomAlert('¡ADVERTENCIA CRÍTICA!', '¿Estás seguro? Esto borrará TODAS las postulaciones de la base de datos.', 'confirm', () => {
+                // Borrar en Firebase
+                db.ref('samu/postulaciones').remove();
+                showCustomAlert('Borrado Exitoso', 'El registro ha quedado completamente limpio.', 'success');
+            });
+        }
+
+        // --- LÓGICA DEL MODAL DINÁMICO ---
+        function abrirModalDetalles(index) {
+            const datos = baseDatosLocal[index];
+            idActualRevisando = datos.id; // Guardamos el ID de Firebase
+            
+            document.getElementById('md-nombres').innerText = `${datos.discord} | ${datos.ic} | ${datos.ooc}`;
+            document.getElementById('md-horario').innerText = `Horario: ${datos.horario} | Nivel RP: ${datos.rp}`;
+            document.getElementById('md-exp').innerText = datos.exp;
+            document.getElementById('md-term').innerText = datos.term;
+            
+            document.getElementById('md-rol1').innerText = datos.rol1;
+            document.getElementById('md-rol2').innerText = datos.rol2;
+            document.getElementById('md-rol3').innerText = datos.rol3;
+            document.getElementById('md-rol4').innerText = datos.rol4;
+            document.getElementById('md-rol5').innerText = datos.rol5;
+
+            document.getElementById('md-motivo').innerText = datos.motivo;
+            document.getElementById('md-aporte').innerText = datos.aporte;
+            document.getElementById('md-jerarquia').innerText = datos.jerarquia;
+
+            document.getElementById('modalDetalles').style.display = 'flex';
+        }
+
+        function cerrarModalDetalles() {
+            document.getElementById('modalDetalles').style.display = 'none';
+            idActualRevisando = null;
+        }
+
+        function aprobarPostulacion() {
+            if(idActualRevisando !== null) {
+                // Actualizar el estado directo en Firebase
+                db.ref('samu/postulaciones/' + idActualRevisando).update({estado: 'Aprobado'});
+            }
+            cerrarModalDetalles();
+            showCustomAlert('¡Aprobado!', 'La postulación ha sido marcada como Aprobada.', 'success');
+        }
+
+        function rechazarPostulacion() {
+            showCustomAlert('¿Rechazar Postulación?', 'Se eliminará de la base de datos definitivamente.', 'confirm', () => {
+                if(idActualRevisando !== null) {
+                    // Borrar postulación en Firebase
+                    db.ref('samu/postulaciones/' + idActualRevisando).remove();
+                }
+                cerrarModalDetalles();
+                showCustomAlert('Eliminado', 'La postulación fue rechazada y eliminada del sistema.', 'success');
+            });
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('modalDetalles');
+            if (event.target == modal) { modal.style.display = "none"; idActualRevisando = null; }
+        }
+
+        showTab(currentTab);
+    </script>
+</body>
+</html>
